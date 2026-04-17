@@ -1,0 +1,53 @@
+version: "3.9"
+
+# ============================================================
+# Backend only — uses an EXTERNAL/CLOUD database
+# The DATABASE_URL must point to your cloud DB (e.g. Supabase, RDS, Neon, etc.)
+# Usage: docker-compose -f docker-compose-backend-cloud.yml up --build
+# ============================================================
+
+services:
+
+  # ── Backend ───────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: warehouse-backend
+    container_name: warehouse-backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}          # Required: set in .env or environment
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 5000
+      NODE_ENV: ${NODE_ENV:-production}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # DB_HOST / DB_PORT / POSTGRES_USER are optional here since pg_isready
+      # may not be needed if you handle DB startup externally
+      DB_HOST: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  # ── Frontend ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    image: warehouse-frontend
+    container_name: warehouse-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  uploads_data:
+    name: warehouse_uploads_data
