@@ -52,21 +52,6 @@ services:
       - "5000:5000"
     restart: unless-stopped
 
-  # ── Frontend ──────────────────────────────────────────────
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
-    image: warehouse-frontend
-    container_name: warehouse-frontend
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-
 volumes:
   postgres_data:
     name: warehouse_postgres_data
